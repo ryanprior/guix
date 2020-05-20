@@ -319,3 +319,4 @@ releases.")
 under the name @command{cc}.")))))
 
 (define-public tcc-wrapper (wrap-cc tcc))
+(define-public pcc-wrapper (wrap-cc pcc))
