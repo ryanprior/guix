@@ -7,6 +7,7 @@
 ;;; Copyright © 2019 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -288,3 +289,33 @@ address space pointers point to, or what locks a function acquires or
 releases.")
     (home-page "https://sparse.wiki.kernel.org/index.php/Main_Page")
     (license license:expat)))
+
+(define-public wrap-cc
+  (lambda* (cc #:optional
+               (bin (package-name cc))
+               (name (string-append (package-name cc) "-wrapper")))
+    (package/inherit cc
+      (name name)
+      (source #f)
+      (build-system trivial-build-system)
+      (outputs '("out"))
+      (native-inputs '())
+      (inputs '())
+      (propagated-inputs `(("cc" ,cc)))
+      (arguments
+       `(#:modules ((guix build utils))
+         #:builder
+         (begin
+           (use-modules (guix build utils))
+           (let ((bin-dir (string-append (assoc-ref %build-inputs "cc") "/bin/"))
+                 (wrapper-dir (string-append (assoc-ref %outputs "out") "/bin/")))
+             (mkdir-p wrapper-dir)
+             (symlink (string-append bin-dir ,bin)
+                      (string-append wrapper-dir "cc"))))))
+      (synopsis (string-append "Wrapper for " bin))
+      (description
+       (string-append
+        "Wraps " (package-name cc) " such that @command{" bin "} can be invoked
+under the name @command{cc}.")))))
+
+(define-public tcc-wrapper (wrap-cc tcc))
