@@ -20,6 +20,7 @@
 (define-module (gnu packages sdcc)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages python)
   #:use-module (gnu packages texinfo)
@@ -68,3 +69,5 @@ HC08-based (hc08, s08), Zilog Z80-based MCUs (z80, z180, gbz80, Rabbit
 Work is in progress on supporting the Microchip PIC16 and PIC18 targets.
 It can be retargeted for other microprocessors.")
     (license license:gpl2+)))
+
+(define-public sdcc-wrapper (wrap-cc sdcc))
