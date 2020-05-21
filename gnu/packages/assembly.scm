@@ -36,6 +36,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
@@ -222,6 +223,8 @@ assembler, a C compiler and a linker.  The assembler uses Intel syntax
     (home-page "https://github.com/jbruchon/dev86")
     (supported-systems '("i686-linux" "x86_64-linux"))
     (license license:gpl2+)))
+
+(define-public bcc-wrapper (wrap-cc dev86 "bcc" "bcc-wrapper"))
 
 (define-public libjit
   (let ((commit "554c9f5c750daa6e13a6a5cd416873c81c7b8226"))
