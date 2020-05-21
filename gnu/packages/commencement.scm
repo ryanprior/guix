@@ -3870,6 +3870,9 @@ binaries, plus debugging symbols in the @code{debug} output), and Binutils.")
 (define-public gcc-toolchain
   (make-gcc-toolchain gcc-final))
 
+(define-public gcc-toolchain-wrapper
+  (wrap-cc gcc-toolchain "gcc"))
+
 (define-public gcc-toolchain-4.8
   (make-gcc-toolchain gcc-4.8))
 
