@@ -13882,13 +13882,13 @@ clone, while other processes access the original tree.")
 (define-public python-astroid
   (package
     (name "python-astroid")
-    (version "2.3.3")
+    (version "2.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astroid" version))
        (sha256
-        (base32 "0fnibsl2cb5mvzbfm7sycj85smx48f8w8m7ks1sqlmpr9ps0gski"))))
+        (base32 "15n1b98gaj8k2qma1clfagyg319njjih5f7w6k402ka0l935vyi9"))))
     (build-system python-build-system)
     (propagated-inputs
      `(("python-lazy-object-proxy" ,python-lazy-object-proxy)
@@ -13897,22 +13897,16 @@ clone, while other processes access the original tree.")
        ("python-wrapt" ,python-wrapt)))
     (native-inputs
      `(("python-dateutil" ,python-dateutil)
+       ("python-hypothesis" ,python-hypothesis)
        ("python-nose" ,python-nose)
        ("python-pytest" ,python-pytest)
        ("python-pytest-runner" ,python-pytest-runner)))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'remove-spurious-test
-           (lambda _
-             ;; This can be removed after upgrading from python-3.7
-             ;; https://github.com/PyCQA/astroid/issues/593
-             ;; https://bugs.python.org/issue34056
-             (delete-file "astroid/tests/unittest_modutils.py")
-             #t))
          (replace 'check
            (lambda _
-             (invoke "pytest" "astroid"))))))
+             (invoke "pytest" "astroid" "-vv"))))))
     (home-page "https://github.com/PyCQA/astroid")
     (synopsis "Common base representation of python source code for pylint and
 other projects")
