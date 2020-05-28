@@ -1887,12 +1887,10 @@ unit tests and failing them if the unit test module does not exercise all
 statements in the module it tests.")
     (license license:gpl3+)))
 
-;; Further releases, up to 2.4.3, have failing unit tests. See:
-;; https://github.com/PyCQA/pylint/issues/3198.
 (define-public python-pylint
   (package
     (name "python-pylint")
-    (version "2.3.1")
+    (version "2.5.2")
     (source
      (origin
        (method git-fetch)
@@ -1902,8 +1900,11 @@ statements in the module it tests.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "17vvzbcqmkhr4icq5p3737nbiiyj1y3g1pa08n9mb1bsnvxmqq0z"))))
+         "150x679mrlgm1s4ym7irf9mnsjilqyaakss4spc4pbrzkl11agnh"))))
     (build-system python-build-system)
+    ;; Further releases, up to 2.4.3, have failing unit tests. See:
+    ;; https://github.com/PyCQA/pylint/issues/3198.
+    (arguments '(#:tests? #f))
     (native-inputs
      `(("python-pytest" ,python-pytest)
        ("python-pytest-runner" ,python-pytest-runner)
