@@ -767,14 +767,14 @@ standard library.")
 (define-public python-pytest
   (package
     (name "python-pytest")
-    (version "5.3.5")
+    (version "5.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest" version))
        (sha256
         (base32
-         "139i9cjhrv5aici3skq8iihvfb3lq0d8xb5j7qycr2hlk8cfjpqd"))))
+         "1656cwyqfc3scmxkmrrfzngsql46vn1xmdjmwhbr60baby9mwazb"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -795,6 +795,8 @@ standard library.")
     (propagated-inputs
      `(("python-atomicwrites" ,python-atomicwrites)
        ("python-attrs" ,python-attrs-bootstrap)
+       ("python-colorama" ,python-colorama)
+       ("python-importlib-metadata" ,python-importlib-metadata)
        ("python-more-itertools" ,python-more-itertools)
        ("python-packaging" ,python-packaging-bootstrap)
        ("python-pluggy" ,python-pluggy)
@@ -1904,10 +1906,11 @@ statements in the module it tests.")
     (build-system python-build-system)
     ;; Further releases, up to 2.4.3, have failing unit tests. See:
     ;; https://github.com/PyCQA/pylint/issues/3198.
-    (arguments '(#:tests? #f))
+    ;; (arguments '(#:tests? #f))
     (native-inputs
      `(("python-pytest" ,python-pytest)
        ("python-pytest-runner" ,python-pytest-runner)
+       ("python-toml" ,python-toml)
        ("python-tox" ,python-tox)))
     (propagated-inputs
      `(("python-astroid" ,python-astroid)
