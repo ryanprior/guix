@@ -3262,7 +3262,7 @@ engineering.")
 passwords in the GNOME keyring.")
     (license license:gpl2+)))
 
-(define-public vala
+(define-public vala-0.46
   (package
     (name "vala")
     (version "0.46.5")
@@ -3306,6 +3306,8 @@ language features to GNOME developers without imposing any additional runtime
 requirements and without using a different ABI compared to applications and
 libraries written in C.")
     (license license:lgpl2.1+)))
+
+(define-public vala vala-0.46)
 
 (define-public vte
   (package
