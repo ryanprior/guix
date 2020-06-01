@@ -3307,6 +3307,18 @@ requirements and without using a different ABI compared to applications and
 libraries written in C.")
     (license license:lgpl2.1+)))
 
+(define-public vala-0.48
+  (package/inherit vala-0.46
+    (version "0.48.6")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/vala/"
+                                  (version-major+minor version) "/"
+                                  "vala-" version ".tar.xz"))
+              (sha256
+               (base32
+                "01wppzgacdmp8dgf8047myz1any2yffmrhgl8kqf1q0c0gnhi3fi"))))))
+
 (define-public vala vala-0.46)
 
 (define-public vte
