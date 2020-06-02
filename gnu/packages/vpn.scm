@@ -51,6 +51,7 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -316,7 +317,7 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
 (define-public protonvpn-cli
   (package
     (name "protonvpn-cli")
-    (version "2.2.2")
+    (version "2.2.4")
     (source
      (origin
        ;; PyPI has a ".whl" file but not a proper source release.
@@ -328,7 +329,7 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ixjb02kj4z79whm1izd8mrn2h0rp9cmw4im1qvp93rahqxdd4n8"))))
+         "08yca0a0prrnrc7ir7ajd56yxvxpcs4m1k8f5kf273f5whgr7wzw"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; no tests in repo
     (native-inputs
@@ -337,7 +338,8 @@ traversing network address translators (@dfn{NAT}s) and firewalls.")
      `(("pythondialog" ,python-pythondialog)
        ("requests" ,python-requests)))
     (propagated-inputs
-     `(("openvpn" ,openvpn)))
+     `(("openvpn" ,openvpn)
+       ("dialog" ,dialog)))
     (synopsis "Command-line client for ProtonVPN")
     (description
      "This is the official command-line interface for ProtonVPN, a secure
