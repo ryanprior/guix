@@ -20,10 +20,14 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages vlang)
+  #:use-module (gnu packages digest)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages javascript)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages node)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xorg)
   #:use-module (guix build-system gnu)
@@ -31,6 +35,17 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
   #:use-module (guix packages))
+
+(define markdown-origin
+  (let ((markdown-version "1ccfbcba945b649b61738b9c0455d31cf99564b2"))
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+            (url "https://github.com/vlang/markdown")
+            (commit markdown-version)))
+      (file-name (git-file-name "vlang-markdown" markdown-version))
+      (sha256
+       (base32 "0s982qiwy4s9y07x9fsy4yn642schplhp9hrw2libg2bx4sw43as")))))
 
 (define-public vlang
   (package
@@ -70,15 +85,39 @@
               (("--branch thirdparty-unknown-unknown") "")
               (("rm -rf") "true"))
             #t))
-        (add-before 'check 'delete-failing-tests
-          ;; XXX As always, these should eventually be fixed and run.
+        (add-before 'build 'patch-cc
           (lambda _
+            (let* ((bin "tmp/bin")
+                   (gcc (which "gcc")))
+              (mkdir-p bin)
+              (symlink gcc (string-append bin "/cc"))
+              (setenv "PATH" (string-append bin ":" (getenv "PATH"))))
+            #t))
+        (add-after 'build 'build-tools
+          (lambda* (#:key inputs #:allow-other-keys)
+            (copy-recursively (assoc-ref inputs "vmodules/markdown") "vmodules/markdown")
+            (setenv "VMODULES" (string-append (getcwd) "/vmodules"))
+            (invoke "./v" "build-tools" "-v")
+            #t))
+        (add-before 'check 'fix-or-delete-failing-tests
+          (lambda _
+            ;; The x64 tests copy .vv files into the test directory and then
+            ;; write to them, so we need to make them writeable.
+            (for-each (lambda (vv) (chmod vv #o644))
+                      (find-files "vlib/v/gen/x64/tests/" "\\.vv$"))
+            ;; The process test explicitly calls "/bin/sleep" and "/bin/date"
+            (substitute* "vlib/os/process_test.v"
+              (("/bin/sleep") (which "sleep"))
+              (("/bin/date") (which "date")))
+            ;; The valgrind test can't find `cc' even though it's on PATH, so
+            ;; we pass it as an explicit argument.
+            (substitute* "vlib/v/tests/valgrind/valgrind_test.v"
+              (("\\$vexe") "$vexe -cc gcc"))
             (for-each delete-file
-                      '("vlib/os/notify/notify_test.v"
-                        "vlib/v/doc/doc_private_fn_test.v"
-                        "vlib/v/live/live_test.v"
-                        "vlib/v/tests/repl/repl_test.v"
-                        "vlib/v/tests/valgrind/valgrind_test.v"))
+                      '(;; XXX As always, these should eventually be fixed and run.
+                        "vlib/vweb/tests/vweb_test.v"
+                        "vlib/v/tests/live_test.v"
+                        "vlib/v/tests/repl/repl_test.v"))
             #t))
         (replace 'check
           (lambda* (#:key tests? #:allow-other-keys)
@@ -93,18 +132,17 @@
         (replace 'install
           (lambda* (#:key outputs #:allow-other-keys)
             (let* ((bin (string-append (assoc-ref outputs "out") "/bin"))
-                   (docs (string-append bin "/cmd/v/help"))
-                   (tools (string-append bin "/cmd/tools"))
+                   (cmd (string-append bin "/cmd"))
                    (thirdparty (string-append bin "/thirdparty"))
                    (vlib (string-append bin "/vlib"))
+                   (vmodules (string-append bin "/vmodules"))
                    (vmod (string-append bin "/v.mod")))
               (mkdir-p bin)
               (copy-file "./v" (string-append bin "/v"))
               ;; v requires as of 0.2.4 that these other components are in the
               ;; same directory. In a future release we may be able to move
               ;; these into other output folders.
-              (copy-recursively "cmd/tools" tools)
-              (copy-recursively "cmd/v/help" docs)
+              (copy-recursively "cmd" cmd)
               (copy-recursively "thirdparty" thirdparty)
               (copy-recursively "vlib" vlib)
               (copy-file "v.mod" vmod))
@@ -130,12 +168,19 @@
             (file-name (git-file-name "vc" vc-version))
             (sha256
              (base32 "1gxdkgc7aqw5f0fhch1n6nhzgzvgb49p77idx1zj7wcp53lpx5ng")))))
+      ("vmodules/markdown" ,markdown-origin)
       ("git" ,git-minimal)
       ;; For the tests.
       ("libx11" ,libx11)
       ("node" ,node)
       ("openssl" ,openssl)
-      ("sqlite" ,sqlite)))
+      ("ps" ,procps)
+      ("sqlite" ,sqlite)
+      ("valgrind" ,valgrind)))
+   (native-search-paths
+    (list (search-path-specification
+           (variable "VMODULES")
+           (files '("bin/")))))
    (home-page "https://vlang.io/")
    (synopsis "Compiler for the V programming language")
    (description
