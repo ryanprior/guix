@@ -19,10 +19,15 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages vlang)
+  #:use-module (gnu packages digest)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages javascript)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages node)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages valgrind)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages xorg)
   #:use-module (guix build-system gnu)
   #:use-module (guix git-download)
@@ -30,10 +35,21 @@
   #:use-module (guix utils)
   #:use-module (guix packages))
 
+(define markdown-origin
+  (let ((markdown-version "1ccfbcba945b649b61738b9c0455d31cf99564b2"))
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+            (url "https://github.com/vlang/markdown")
+            (commit markdown-version)))
+      (file-name (git-file-name "vlang-markdown" markdown-version))
+      (sha256
+       (base32 "0s982qiwy4s9y07x9fsy4yn642schplhp9hrw2libg2bx4sw43as")))))
+
 (define-public vlang
   (package
    (name "vlang")
-   (version "0.1.29")
+   (version "0.2")
    (source
     (origin
      (method git-fetch)
@@ -42,7 +58,7 @@
            (commit version)))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "1rqi7cah5nq8aggrib9xvdpfjxq20li91svv0w9yny6nn1ag7snx"))))
+      (base32 "1x2sf2j6xl11kjvv0i0anjqwsfb1la11xr7yhdnbix9808442wm2"))))
    (build-system gnu-build-system)
    (arguments
     `(#:make-flags
@@ -61,42 +77,60 @@
           (lambda _
             (substitute* "Makefile"
               (("rm -rf") "true")
-              (("v self") (string-append "v -cc " ,(cc-for-target) " cmd/v")))
-            #t))
-        (add-before 'check 'delete-failing-tests
-          ;; XXX As always, these should eventually be fixed and run.
+              (("--branch") ""))))
+        (add-before 'build 'patch-cc
           (lambda _
+            (let* ((bin "tmp/bin")
+                   (gcc (which "gcc")))
+              (mkdir-p bin)
+              (symlink gcc (string-append bin "/cc"))
+              (setenv "PATH" (string-append bin ":" (getenv "PATH"))))
+            #t))
+        (add-after 'build 'build-tools
+          (lambda* (#:key inputs #:allow-other-keys)
+            (copy-recursively (assoc-ref inputs "vmodules/markdown") "vmodules/markdown")
+            (setenv "VMODULES" (string-append (getcwd) "/vmodules"))
+            (invoke "./v" "build-tools" "-v")
+            #t))
+        (add-before 'check 'fix-or-delete-failing-tests
+          (lambda _
+            ;; The x64 tests copy .vv files into the test directory and then
+            ;; write to them, so we need to make them writeable.
+            (for-each (lambda (vv) (chmod vv #o644))
+                      (find-files "vlib/v/gen/x64/tests/" "\\.vv$"))
+            ;; The process test explicitly calls "/bin/sleep" and "/bin/date"
+            (substitute* "vlib/os/process_test.v"
+              (("/bin/sleep") (which "sleep"))
+              (("/bin/date") (which "date")))
+            ;; The valgrind test can't find `cc' even though it's on PATH, so
+            ;; we pass it as an explicit argument.
+            (substitute* "vlib/v/tests/valgrind/valgrind_test.v"
+              (("\\$vexe") "$vexe -cc gcc"))
             (for-each delete-file
-                      '("vlib/v/gen/x64/tests/x64_test.v"
-                        "vlib/v/tests/repl/repl_test.v"
-                        "vlib/v/tests/valgrind/valgrind_test.v"
-                        "vlib/v/tests/valgrind/strings_and_arrays.vv"
+                      '(;; XXX As always, these should eventually be fixed and run.
+                        "vlib/vweb/tests/vweb_test.v"
                         "vlib/v/tests/live_test.v"
-                        "vlib/net/websocket/ws_test.v"))
+                        "vlib/v/tests/repl/repl_test.v"))
             #t))
         (replace 'check
           (lambda* (#:key tests? #:allow-other-keys)
-            (let* ((bin "tmp/bin")
-                   (gcc (which "gcc")))
-              (when tests?
-                (mkdir-p bin)
-                (symlink gcc (string-append bin "/cc"))
-                (setenv "PATH" (string-append bin ":" (getenv "PATH")))
-                (invoke "./v" "test-fixed")))
+            (when tests?
+              (invoke "./v" "test-fixed"))
             #t))
         (replace 'install
           (lambda* (#:key outputs #:allow-other-keys)
             (let* ((bin (string-append (assoc-ref outputs "out") "/bin"))
-                   (tools (string-append bin "/cmd/tools"))
+                   (cmd (string-append bin "/cmd"))
                    (thirdparty (string-append bin "/thirdparty"))
                    (vlib (string-append bin "/vlib"))
+                   (vmodules (string-append bin "/vmodules"))
                    (vmod (string-append bin "/v.mod")))
               (mkdir-p bin)
               (copy-file "./v" (string-append bin "/v"))
               ;; v requires as of 0.1.27 that these other components are in the
               ;; same directory. In a future release we may be able to move
               ;; these into other output folders.
-              (copy-recursively "cmd/tools" tools)
+              (copy-recursively "cmd" cmd)
               (copy-recursively "thirdparty" thirdparty)
               (copy-recursively "vlib" vlib)
               (copy-file "v.mod" vmod))
@@ -107,7 +141,7 @@
     `(("vc"
        ;; Versions are not consistently tagged, but the matching commit will
        ;; probably have ‘v0.x.y’ in the commit message.
-       ,(let ((vc-version "b01d0fcda4b55861baa4be82e307cca4834b1641"))
+       ,(let ((vc-version "047460a4ae5f4a1ba8c31dc50ec5e50ebe80b7f6"))
           ;; v bootstraps from generated c source code from a dedicated
           ;; repository. It's readable, as generated source goes, and not at all
           ;; obfuscated, and it's about 15kb. The original source written in
@@ -121,13 +155,20 @@
                   (commit vc-version)))
             (file-name (git-file-name "vc" vc-version))
             (sha256
-             (base32 "052gp5q2k31r3lci3rx4k0vy0vjdjva64xvrbbihn8lgmw63lc9f")))))
+             (base32 "1wlr9yzxz4bc7pbzbplzhjjr9sz5mwy2k2z5d3vwsnz56g245146")))))
+      ("vmodules/markdown" ,markdown-origin)
 
       ;; For the tests.
       ("libx11" ,libx11)
       ("node" ,node)
       ("openssl" ,openssl)
-      ("sqlite" ,sqlite)))
+      ("ps" ,procps)
+      ("sqlite" ,sqlite)
+      ("valgrind" ,valgrind)))
+   (native-search-paths
+    (list (search-path-specification
+           (variable "VMODULES")
+           (files '("bin/")))))
    (home-page "https://vlang.io/")
    (synopsis "Compiler for the V programming language")
    (description
