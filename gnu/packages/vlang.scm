@@ -65,7 +65,8 @@
      (snippet
       '(begin
          ;; Eventually remove the whole thirdparty directory.
-         (delete-file-recursively "thirdparty/bignum")))))
+         (delete-file-recursively "thirdparty/bignum")
+         (delete-file-recursively "thirdparty/cJSON")))))
    (build-system gnu-build-system)
    (arguments
     `(#:make-flags
@@ -92,7 +93,10 @@
               (("--branch thirdparty-unknown-unknown") ""))
             (substitute* "vlib/math/big/big.v"
               (("@VROOT/thirdparty/bignum")
-               (string-append (assoc-ref inputs "tiny-bignum") "/share")))))
+               (string-append (assoc-ref inputs "tiny-bignum") "/share")))
+            (substitute* "vlib/json/json_primitives.v"
+              (("@VROOT/thirdparty/cJSON")
+               (assoc-ref inputs "cJSON")))))
         (add-before 'build 'patch-cc
           (lambda _
             (let* ((bin "tmp/bin")
@@ -156,7 +160,9 @@
               (copy-file "v.mod" vmod))
             #t)))))
    (inputs
-    (list glib tiny-bignum))
+    `(("glib" ,glib)
+      ("tiny-bignum" ,tiny-bignum)
+      ("cJSON" ,(package-source cjson))))
    (native-inputs
     `(("vc"
        ;; Versions are not consistently tagged, but the matching commit will
