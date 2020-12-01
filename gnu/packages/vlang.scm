@@ -24,6 +24,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages javascript)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages maths)
   #:use-module (gnu packages node)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tls)
@@ -59,7 +60,12 @@
            (commit version)))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "17wmjxssmg6kd4j8i6pgib452zzwvkyi3n1znd1jj3xkf2l92fw8"))))
+      (base32 "17wmjxssmg6kd4j8i6pgib452zzwvkyi3n1znd1jj3xkf2l92fw8"))
+     (modules '((guix build utils)))
+     (snippet
+      '(begin
+         ;; Eventually remove the whole thirdparty directory.
+         (delete-file-recursively "thirdparty/bignum")))))
    (build-system gnu-build-system)
    (arguments
     `(#:make-flags
@@ -79,12 +85,14 @@
           (lambda _
             (setenv "HOME" "/tmp")
             #t))
-        (add-before 'build 'patch-makefile
-          (lambda _
+        (add-before 'build 'patch-files
+          (lambda* (#:key inputs #:allow-other-keys)
             (substitute* "Makefile"
-              (("--branch thirdparty-unknown-unknown") "")
-              (("rm -rf") "true"))
-            #t))
+              (("rm -rf") "true")
+              (("--branch thirdparty-unknown-unknown") ""))
+            (substitute* "vlib/math/big/big.v"
+              (("@VROOT/thirdparty/bignum")
+               (string-append (assoc-ref inputs "tiny-bignum") "/share")))))
         (add-before 'build 'patch-cc
           (lambda _
             (let* ((bin "tmp/bin")
@@ -148,7 +156,7 @@
               (copy-file "v.mod" vmod))
             #t)))))
    (inputs
-    (list glib))
+    (list glib tiny-bignum))
    (native-inputs
     `(("vc"
        ;; Versions are not consistently tagged, but the matching commit will
