@@ -65,8 +65,10 @@
      (snippet
       '(begin
          ;; Eventually remove the whole thirdparty directory.
-         (delete-file-recursively "thirdparty/bignum")
-         (delete-file-recursively "thirdparty/cJSON")))))
+         (for-each delete-file-recursively
+                   '("thirdparty/bignum"
+                     "thirdparty/cJSON"
+                     "thirdparty/wyhash"))))))
    (build-system gnu-build-system)
    (arguments
     `(#:make-flags
@@ -96,7 +98,10 @@
                (string-append (assoc-ref inputs "tiny-bignum") "/share")))
             (substitute* "vlib/json/json_primitives.v"
               (("@VROOT/thirdparty/cJSON")
-               (assoc-ref inputs "cJSON")))))
+               (assoc-ref inputs "cJSON")))
+            (substitute* "vlib/hash/wyhash.c.v"
+              (("@VROOT/thirdparty/wyhash")
+               (string-append (assoc-ref inputs "wyhash") "/include")))))
         (add-before 'build 'patch-cc
           (lambda _
             (let* ((bin "tmp/bin")
@@ -162,7 +167,8 @@
    (inputs
     `(("glib" ,glib)
       ("tiny-bignum" ,tiny-bignum)
-      ("cJSON" ,(package-source cjson))))
+      ("cJSON" ,(package-source cjson))
+      ("wyhash" ,wyhash)))
    (native-inputs
     `(("vc"
        ;; Versions are not consistently tagged, but the matching commit will
