@@ -31,6 +31,7 @@
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages)
   #:use-module (guix build-system gnu)
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
@@ -62,6 +63,12 @@
      (sha256
       (base32 "17wmjxssmg6kd4j8i6pgib452zzwvkyi3n1znd1jj3xkf2l92fw8"))
      (modules '((guix build utils)))
+     ;; This patch is already accepted upstream but is required for version
+     ;; 0.2. The package will build without it, but it will fail to run any v
+     ;; tools afterwards because of how Guix changes modified timestamps in
+     ;; the package files.
+     (patches (search-patches
+               "vlang-accommodate-timestamps.patch"))
      (snippet
       '(begin
          ;; Eventually remove the whole thirdparty directory.
