@@ -2197,6 +2197,54 @@ passphrase can be recovered and the AP's wireless settings can be
 reconfigured.")
     (license license:gpl2+)))
 
+(define-public picoev
+  (let ((commit "ff85d9ef578842a40f7c91d2544b7932cec74b9d")
+        (revision "0"))
+    (package
+      (name "picoev")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/kazuho/picoev")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "11ga0hyx6r229wvmds4gaq0ilrcb1j84gri7gxcnv7910yf1sv61"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:tests? #f ; no tests available
+         #:make-flags (list (string-append "CC=" ,(cc-for-target))
+                            "LINUX_BUILD=1")
+         #:modules ((guix build gnu-build-system)
+                    (guix build utils)
+                    (srfi srfi-26))
+         #:phases
+         (modify-phases %standard-phases
+           (delete 'configure)
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out (string-append (assoc-ref outputs "out")))
+                      (include (string-append out "/include"))
+                      (lib (string-append out "/lib"))
+                      (doc (string-append out "/share/doc/" ,name "-" ,version)))
+                 (for-each (cut install-file <> include)
+                           '("picoev.h"
+                             "picoev_epoll.c"
+                             "picoev_kqueue.c"
+                             "picoev_select.c"))
+                 (install-file "libpicoev.so" lib)
+                 (install-file "README.md" doc))
+               #t)))))
+      (home-page "https://github.com/kazuho/picoev")
+      (synopsis "Tiny portable event loop library")
+      (description
+       "This library provides a tiny event loop with a simple design,
+supporting only @code{select(2)}, @code{epoll(2)}, and @code{kqueue(2)}.")
+      (license license:expat))))
+
 (define-public perl-danga-socket
   (package
     (name "perl-danga-socket")
