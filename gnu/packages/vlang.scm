@@ -25,6 +25,7 @@
   #:use-module (gnu packages javascript)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages networking)
   #:use-module (gnu packages node)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tls)
@@ -75,6 +76,7 @@
          (for-each delete-file-recursively
                    '("thirdparty/bignum"
                      "thirdparty/cJSON"
+                     "thirdparty/picoev"
                      "thirdparty/wyhash"))))))
    (build-system gnu-build-system)
    (arguments
@@ -108,7 +110,10 @@
                (assoc-ref inputs "cJSON")))
             (substitute* "vlib/hash/wyhash.c.v"
               (("@VROOT/thirdparty/wyhash")
-               (string-append (assoc-ref inputs "wyhash") "/include")))))
+               (string-append (assoc-ref inputs "wyhash") "/include")))
+            (substitute* "vlib/picoev/picoev.v"
+              (("@VROOT/thirdparty/picoev")
+               (string-append (assoc-ref inputs "picoev") "/include")))))
         (add-before 'build 'patch-cc
           (lambda _
             (let* ((bin "tmp/bin")
@@ -175,6 +180,7 @@
     `(("glib" ,glib)
       ("tiny-bignum" ,tiny-bignum)
       ("cJSON" ,(package-source cjson))
+      ("picoev" ,picoev)
       ("wyhash" ,wyhash)))
    (native-inputs
     `(("vc"
