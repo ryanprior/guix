@@ -278,6 +278,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/golang.scm			\
   %D%/packages/golang-datastructures.scm	\
   %D%/packages/golang-web.scm			\
+  %D%/packages/golang-xyz.scm			\
   %D%/packages/gperf.scm			\
   %D%/packages/gpodder.scm			\
   %D%/packages/gps.scm				\
