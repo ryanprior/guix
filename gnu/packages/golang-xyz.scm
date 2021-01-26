@@ -34,3 +34,30 @@ etc.) that are complex.  The most common use case is comparing two values
 without sending data across the network, caching values locally (de-dup), and
 so on.")
     (license license:expat)))
+
+(define-public go-github-com-matryer-try
+  (package
+    (name "go-github-com-matryer-try")
+    (version "1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matryer/try")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "15f0m5ywihivnvwzcw0mh0sg27aky9rkywvxqszxka9q051qvsmy"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:tests? #f ; tests broken
+       #:import-path "github.com/matryer/try"))
+    (native-inputs
+     `(("go-github-com-cheekybits-is" ,go-github-com-cheekybits-is)))
+    (home-page "https://github.com/matryer/try")
+    (synopsis "Retry library for golang.")
+    (description
+     "This package provides a facility to run a function and retry on error,
+up to to a configurable maximum number of retries.")
+    (license license:expat)))
