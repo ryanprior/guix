@@ -653,6 +653,27 @@ recursively, like @code{mkdir -p}.")
 @code{Buffer.alloc(SIZE)}) in older versions.")
     (license license:expat)))
 
+(define-public node-rimraf
+  (package
+    (name "node-rimraf")
+    (version "3.0.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/isaacs/rimraf/")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "1j0wmwwrzqv5k5lsm1dfdik0f5ilprpwrb3i609x8qcm2k8as572"))))
+    (build-system node-build-system)
+    (arguments
+     '(#:tests? #f)) ;; FIXME: Tests depend on node-tap
+    (home-page "https://github.com/isaacs/rimraf/")
+    (synopsis "Remove directories recursively in nodejs.")
+    (description "This package provides a nodejs API to remove directories
+recursively, like @code{rm -rf}.")
+    (license license:expat)))
+
 (define-public node-string-decoder
   (package
     (name "node-string-decoder")
