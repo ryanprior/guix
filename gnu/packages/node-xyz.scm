@@ -268,3 +268,25 @@ function with browser support.")
      "@code{node-semver} is a JavaScript implementation of the
 @uref{https://semver.org/, SemVer.org} specification.")
     (license license:isc)))
+
+(define-public node-mkdirp
+  (package
+    (name "node-mkdirp")
+    (version "1.0.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/isaacs/node-mkdirp")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "1c9zmgnhldrrwim644qjlrfw4hcdvb6b2bawyhqh649gxpnkzb5m"))))
+    (build-system node-build-system)
+    (arguments
+     `(#:tests? #f)) ;; FIXME: Tests depend on node-tap
+    (home-page "https://github.com/isaacs/node-mkdirp")
+    (synopsis "Make directories recursively in nodejs.")
+    (description "This package provides a nodejs API to make directories
+recursively, like @code{mkdir -p}.")
+    (license license:expat)))
+
