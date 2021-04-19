@@ -158,4 +158,4 @@ tmp
 /gnu/packages/bootstrap
 /gnu/packages/aux-files/guile-guile-launcher.o
 /guile
-.DS_Store
+/patches/*.patch
