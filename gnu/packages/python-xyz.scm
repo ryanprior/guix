@@ -76,7 +76,7 @@
 ;;; Copyright © 2020 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2020 Alex ter Weele <alex.ter.weele@gmail.com>
 ;;; Copyright © 2020 Matthew James Kraai <kraai@ftbfs.org>
-;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
+;;; Copyright © 2020, 2021 Ryan Prior <rprior@protonmail.com>
 ;;; Copyright © 2020 Josh Holland <josh@inv.alid.pw>
 ;;; Copyright © 2020 Yuval Kogman <nothingmuch@woobling.org>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
@@ -28063,6 +28063,48 @@ It currently provides descriptions for most user-mode x86, x86_64, and k1om
 instructions up to AVX-512 and SHA (including 3dnow!+, XOP, FMA3, FMA4, TBM
 and BMI2).")
       (license license:bsd-2))))
+
+(define-public python-proton-client
+  (package
+    (name "python-proton-client")
+    (version "0.5.1")
+    (home-page "https://github.com/ProtonMail/proton-python-client")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference (url home-page) (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1wm73c9dr5cmw7gm8w36byvaqvhzb6ybvb4g4kx9j1l39h28zdpz"))))
+    (build-system python-build-system)
+    (arguments '(#:tests? #f ; Tests require network access.
+                 #:phases
+                 (modify-phases %standard-phases
+                   (add-before 'build 'patch-libs
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       (let ((libssl (string-append (assoc-ref inputs "openssl")
+                                                    "/lib/libssl.so")))
+                         (substitute* "proton/srp/_ctsrp.py"
+                           (("libssl\\.so") libssl)))
+                       #t))
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests? (invoke "python" "-m" "pytest"))
+                       #t)))))
+    (inputs
+     `(("requests" ,python-requests)
+       ("bcrypt" ,python-bcrypt)
+       ("gnupg" ,python-gnupg)
+       ("openssl" ,openssl)
+       ("pyopenssl" ,python-pyopenssl)))
+    (native-inputs
+     `(("pytest" ,python-pytest)))
+    (synopsis "API client for Proton services")
+    (description
+     "This API client library provides authentication, session handling, error
+handling, and convenient API wrappers for Proton services.")
+    (license license:gpl3+)))
+
 
 (define-public python-peachpy
   ;; There is no tag in this repo.
