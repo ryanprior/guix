@@ -86,30 +86,36 @@
 (define-public visidata
   (package
     (name "visidata")
-    (version "2.8")
+    (version "2.10")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "visidata" version))
        (sha256
         (base32
-         "1jfhrk0xvzzqfzs0khbig2dc94718qki8zys1f1a9553vjncvmi6"))))
+         "1zvb9g12xhyzxirxzffgmi5gsxwjnfv541fr4drd62w6vby7laln"))))
     (build-system python-build-system)
     (arguments
      '(#:phases
        (modify-phases %standard-phases
+         (add-before 'check 'setup-for-tests
+           ;; Some tests require a home directory with visidatarc in it.
+           (lambda _
+             (invoke "touch" ".visidatarc")
+             (setenv "HOME" (getcwd))
+             #t))
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests? (invoke "pytest"))
              #t)))))
     (inputs
      (list python-dateutil
-           python-requests
+           python-importlib-metadata
            python-lxml
            python-openpyxl
+           python-requests
            python-xlrd))
-    (native-inputs
-     (list python-pytest))
+    (native-inputs (list python-pytest))
     (synopsis "Terminal spreadsheet multitool for discovering and arranging data")
     (description
      "VisiData is an interactive multitool for tabular data.  It combines the
